@@ -1,5 +1,4 @@
-import { Injectable, NestMiddleware, MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
-import { Request, Response, NextFunction } from 'express';
+import { Injectable, Logger, MiddlewareConsumer, Module, NestMiddleware, NestModule, RequestMethod } from '@nestjs/common';
 import { ArticleController } from './article.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ArticleEntity } from './article.entity';
@@ -12,14 +11,19 @@ import { UserModule } from '../user/user.module';
 
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {
-  use(req: Request, res: Response, next: NextFunction) {
-    const start = Date.now();
+  private readonly logger = new Logger('HTTP');
+
+  use(req: any, res: any, next: () => void) {
     const { method, originalUrl } = req;
-    const timestamp = new Date().toISOString();
+    const startTime = Date.now();
+
     res.on('finish', () => {
-      const duration = Date.now() - start;
-      console.log(`${timestamp} ${method} ${originalUrl} ${res.statusCode} ${duration}ms`);
+      const elapsed = Date.now() - startTime;
+      this.logger.log(
+        `${new Date().toISOString()} | ${method} | ${originalUrl} | ${res.statusCode} | ${elapsed}ms`
+      );
     });
+
     next();
   }
 }
