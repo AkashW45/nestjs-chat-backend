@@ -1,4 +1,4 @@
-import {MiddlewareConsumer, Module, NestModule, RequestMethod, Injectable, Logger, NestMiddleware} from '@nestjs/common';
+import {MiddlewareConsumer, Module, NestModule, RequestMethod, Injectable, NestMiddleware, Logger} from '@nestjs/common';
 import { ProfileController } from './profile.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProfileService } from './profile.service';
@@ -6,17 +6,22 @@ import { UserModule } from '../user/user.module';
 import {UserEntity} from "../user/user.entity";
 import {FollowsEntity} from "./follows.entity";
 import {AuthMiddleware} from "../user/auth.middleware";
+import { Request, Response, NextFunction } from 'express';
 
 @Injectable()
-export class RequestLoggingMiddleware implements NestMiddleware {
+export class LoggerMiddleware implements NestMiddleware {
   private readonly logger = new Logger('HTTP');
 
-  use(req: any, res: any, next: () => void) {
-    const start = Date.now();
-    res.on('finish', () => {
-      const duration = Date.now() - start;
-      this.logger.log(`${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`);
+  use(request: Request, response: Response, next: NextFunction): void {
+    const { method, originalUrl } = request;
+    const startTime = Date.now();
+
+    response.on('finish', () => {
+      const { statusCode } = response;
+      const responseTime = Date.now() - startTime;
+      this.logger.log(`${method} ${originalUrl} ${statusCode} ${responseTime}ms`);
     });
+
     next();
   }
 }
@@ -32,8 +37,8 @@ export class RequestLoggingMiddleware implements NestMiddleware {
 export class ProfileModule implements NestModule {
   public configure(consumer: MiddlewareConsumer) {
     consumer
-      .apply(RequestLoggingMiddleware)
-      .forRoutes({path: '*', method: RequestMethod.ALL})
+      .apply(LoggerMiddleware)
+      .forRoutes({ path: '*', method: RequestMethod.ALL })
       .apply(AuthMiddleware)
       .forRoutes({path: 'profiles/:username/follow', method: RequestMethod.ALL});
   }

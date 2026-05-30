@@ -1,19 +1,28 @@
-import {MiddlewareConsumer, Module, NestModule, RequestMethod} from '@nestjs/common';
+import { Injectable, Logger, MiddlewareConsumer, Module, NestModule, NestMiddleware, RequestMethod } from '@nestjs/common';
+import { Request, Response, NextFunction } from 'express';
 import { UserController } from './user.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from './user.entity';
 import { UserService } from './user.service';
 import { AuthMiddleware } from './auth.middleware';
-import { Request, Response, NextFunction } from 'express';
 
-const requestLogger = (req: Request, res: Response, next: NextFunction) => {
-  const start = Date.now();
-  res.on('finish', () => {
-    const duration = Date.now() - start;
-    console.log(`${new Date().toISOString()} ${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`);
-  });
-  next();
-};
+@Injectable()
+export class LoggingMiddleware implements NestMiddleware {
+  private readonly logger = new Logger('HTTP');
+
+  use(request: Request, response: Response, next: NextFunction): void {
+    const { method, originalUrl } = request;
+    const start = Date.now();
+
+    response.on('finish', () => {
+      const { statusCode } = response;
+      const elapsed = Date.now() - start;
+      this.logger.log(`${method} ${originalUrl} ${statusCode} ${elapsed}ms`);
+    });
+
+    next();
+  }
+}
 
 @Module({
   imports: [TypeOrmModule.forFeature([UserEntity])],
@@ -26,7 +35,11 @@ const requestLogger = (req: Request, res: Response, next: NextFunction) => {
 export class UserModule implements NestModule {
   public configure(consumer: MiddlewareConsumer) {
     consumer
-      .apply(requestLogger, AuthMiddleware)
+      .apply(LoggingMiddleware)
+      .forRoutes('*');
+
+    consumer
+      .apply(AuthMiddleware)
       .forRoutes({path: 'user', method: RequestMethod.GET}, {path: 'user', method: RequestMethod.PUT});
   }
 }
