@@ -14,13 +14,14 @@ export class LoggerMiddleware implements NestMiddleware {
   private readonly logger = new Logger('HTTP');
 
   use(req: any, res: any, next: () => void) {
-    const { method, originalUrl } = req;
+    const { method } = req;
+    const path = req.path;
     const startTime = Date.now();
 
     res.on('finish', () => {
       const elapsed = Date.now() - startTime;
       this.logger.log(
-        `${new Date().toISOString()} | ${method} | ${originalUrl} | ${res.statusCode} | ${elapsed}ms`
+        `${new Date().toISOString()} | ${method} | ${path} | ${res.statusCode} | ${elapsed}ms`
       );
     });
 
