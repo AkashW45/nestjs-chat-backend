@@ -19,7 +19,7 @@ export class LoggerMiddleware implements NestMiddleware {
     response.on('finish', () => {
       const { statusCode } = response;
       const responseTime = Date.now() - startTime;
-      this.logger.log(`${method} ${originalUrl} ${statusCode} ${responseTime}ms`);
+      this.logger.log(`${new Date().toISOString()} ${method} ${originalUrl} ${statusCode} ${responseTime}ms`);
     });
 
     next();
