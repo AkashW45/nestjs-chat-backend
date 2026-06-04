@@ -103,4 +103,14 @@ export class ArticleController {
     return await this.articleService.unFavorite(userId, slug);
   }
 
+  @ApiOperation({ summary: 'Get version info' })
+  @ApiResponse({ status: 200, description: 'Returns version information.' })
+  @Get('/version')
+  async getVersion() {
+    const service = 'articles-service';
+    const commit = process.env.GIT_COMMIT || 'unknown';
+    const timestamp = new Date().toISOString();
+    return { service, commit, timestamp };
+  }
+
 }

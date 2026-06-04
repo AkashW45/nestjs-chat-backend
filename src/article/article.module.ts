@@ -1,4 +1,4 @@
-import { Injectable, Logger, MiddlewareConsumer, Module, NestMiddleware, NestModule, RequestMethod } from '@nestjs/common';
+import { Controller, Get, Injectable, Logger, MiddlewareConsumer, Module, NestMiddleware, NestModule, RequestMethod } from '@nestjs/common';
 import { ArticleController } from './article.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ArticleEntity } from './article.entity';
@@ -29,11 +29,24 @@ export class LoggerMiddleware implements NestMiddleware {
   }
 }
 
+@Controller('version')
+export class VersionController {
+  @Get()
+  getVersion() {
+    return {
+      service: 'article-service',
+      commit: process.env.GIT_COMMIT || 'unknown',
+      timestamp: new Date().toISOString()
+    };
+  }
+}
+
 @Module({
   imports: [TypeOrmModule.forFeature([ArticleEntity, Comment, UserEntity, FollowsEntity]), UserModule],
   providers: [ArticleService],
   controllers: [
-    ArticleController
+    ArticleController,
+    VersionController
   ]
 })
 export class ArticleModule implements NestModule {

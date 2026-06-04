@@ -1,4 +1,4 @@
-import {MiddlewareConsumer, Module, NestModule, RequestMethod, Injectable, NestMiddleware, Logger} from '@nestjs/common';
+import {MiddlewareConsumer, Module, NestModule, RequestMethod, Injectable, NestMiddleware, Logger, Controller, Get} from '@nestjs/common';
 import { ProfileController } from './profile.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProfileService } from './profile.service';
@@ -31,6 +31,27 @@ export class LoggerMiddleware implements NestMiddleware {
   providers: [ProfileService],
   controllers: [
     ProfileController
+  ],
+  exports: []
+})
+@Controller()
+export class VersionController {
+  @Get('/version')
+  getVersion(): { service: string; commit: string; timestamp: string } {
+    return {
+      service: 'profile-service',
+      commit: process.env.GIT_COMMIT || 'unknown',
+      timestamp: new Date().toISOString()
+    };
+  }
+}
+
+@Module({
+  imports: [TypeOrmModule.forFeature([UserEntity, FollowsEntity]), UserModule],
+  providers: [ProfileService],
+  controllers: [
+    ProfileController,
+    VersionController
   ],
   exports: []
 })
