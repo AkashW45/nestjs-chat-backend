@@ -1,4 +1,4 @@
-import { Injectable, Logger, MiddlewareConsumer, Module, NestModule, NestMiddleware, RequestMethod } from '@nestjs/common';
+import { Controller, Get, Header, Injectable, Logger, MiddlewareConsumer, Module, NestModule, NestMiddleware, RequestMethod } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { UserController } from './user.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -22,13 +22,23 @@ export class LoggingMiddleware implements NestMiddleware {
 
     next();
   }
+
+@Controller('ping')
+export class PingController {
+  @Get()
+  @Header('Content-Type', 'text/plain')
+  getPing(): string {
+    return 'pong';
+  }
+}
 }
 
 @Module({
   imports: [TypeOrmModule.forFeature([UserEntity])],
   providers: [UserService],
   controllers: [
-    UserController
+    UserController,
+    PingController
   ],
   exports: [UserService]
 })
