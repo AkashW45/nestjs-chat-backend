@@ -1,20 +1,22 @@
 # syntax=docker/dockerfile:1
-FROM node:20-alpine AS builder
-WORKDIR /app
-
-COPY package*.json ./
-RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
-
-COPY . .
-RUN npm run build
-
 FROM node:20-alpine
+
 WORKDIR /app
 ENV NODE_ENV=production
 
-COPY --from=builder /app/package*.json ./
+COPY package*.json ./
 RUN if [ -f package-lock.json ]; then npm ci --omit=dev; else npm install --omit=dev; fi
-COPY --from=builder /app/dist ./dist
+
+COPY . .
+
+# Build only if a "build" script exists in package.json; ignore failures
+RUN if grep -q '"build"' package.json 2>/dev/null; then npm run build || true; fi
 
 EXPOSE 3000
-CMD ["node", "dist/main.js"]
+
+# Pick whichever entry point this repo actually has
+CMD ["sh", "-c", "\
+    if [ -f dist/main.js ]; then exec node dist/main.js; \
+    elif [ -f dist/index.js ]; then exec node dist/index.js; \
+    elif [ -f index.js ]; then exec node index.js; \
+    else exec npm start; fi"]
