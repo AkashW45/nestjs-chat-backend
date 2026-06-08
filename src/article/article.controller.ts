@@ -23,7 +23,9 @@ export class ArticleController {
   @ApiResponse({ status: 200, description: 'Return all articles.'})
   @Get()
   async findAll(@Query() query): Promise<ArticlesRO> {
-    return await this.articleService.findAll(query);
+    const result = await this.articleService.findAll(query);
+    result.articles = result.articles.map(article => this.addReadingTime(article));
+    return result;
   }
 
 
@@ -32,12 +34,16 @@ export class ArticleController {
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   @Get('feed')
   async getFeed(@User('id') userId: number, @Query() query): Promise<ArticlesRO> {
-    return await this.articleService.findFeed(userId, query);
+    const result = await this.articleService.findFeed(userId, query);
+    result.articles = result.articles.map(article => this.addReadingTime(article));
+    return result;
   }
 
   @Get(':slug')
   async findOne(@Param('slug') slug): Promise<ArticleRO> {
-    return await this.articleService.findOne({slug});
+    const result = await this.articleService.findOne({slug});
+    result.article = this.addReadingTime(result.article);
+    return result;
   }
 
   @Get(':slug/comments')
@@ -50,7 +56,9 @@ export class ArticleController {
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   @Post()
   async create(@User('id') userId: number, @Body('article') articleData: CreateArticleDto) {
-    return this.articleService.create(userId, articleData);
+    const result = await this.articleService.create(userId, articleData);
+    result.article = this.addReadingTime(result.article);
+    return result;
   }
 
   @ApiOperation({ summary: 'Update article' })
@@ -59,7 +67,9 @@ export class ArticleController {
   @Put(':slug')
   async update(@Param() params, @Body('article') articleData: CreateArticleDto) {
     // Todo: update slug also when title gets changed
-    return this.articleService.update(params.slug, articleData);
+    const result = await this.articleService.update(params.slug, articleData);
+    result.article = this.addReadingTime(result.article);
+    return result;
   }
 
   @ApiOperation({ summary: 'Delete article' })
@@ -92,7 +102,9 @@ export class ArticleController {
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   @Post(':slug/favorite')
   async favorite(@User('id') userId: number, @Param('slug') slug) {
-    return await this.articleService.favorite(userId, slug);
+    const result = await this.articleService.favorite(userId, slug);
+    result.article = this.addReadingTime(result.article);
+    return result;
   }
 
   @ApiOperation({ summary: 'Unfavorite article' })
@@ -100,7 +112,9 @@ export class ArticleController {
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   @Delete(':slug/favorite')
   async unFavorite(@User('id') userId: number, @Param('slug') slug) {
-    return await this.articleService.unFavorite(userId, slug);
+    const result = await this.articleService.unFavorite(userId, slug);
+    result.article = this.addReadingTime(result.article);
+    return result;
   }
 
   @ApiOperation({ summary: 'Get version info' })
@@ -111,6 +125,12 @@ export class ArticleController {
     const commit = process.env.GIT_COMMIT || 'unknown';
     const timestamp = new Date().toISOString();
     return { service, commit, timestamp };
+  }
+
+  private addReadingTime(article: any): any {
+    const wordCount = article.body ? article.body.split(/\s+/).length : 0;
+    const readingTimeMinutes = Math.max(1, Math.ceil(wordCount / 200));
+    return { ...article, reading_time_minutes: readingTimeMinutes };
   }
 
 }

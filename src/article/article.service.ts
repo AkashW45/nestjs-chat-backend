@@ -59,8 +59,12 @@ export class ArticleService {
     }
 
     const articles = await qb.getMany();
+    const articlesWithReadingTime = articles.map(article => ({
+      ...article,
+      reading_time_minutes: this.computeReadingTime(article.body || '')
+    }));
 
-    return {articles, articlesCount};
+    return {articles: articlesWithReadingTime, articlesCount};
   }
 
   async findFeed(userId: number, query): Promise<ArticlesRO> {
@@ -89,12 +93,19 @@ export class ArticleService {
     }
 
     const articles = await qb.getMany();
+    const articlesWithReadingTime = articles.map(article => ({
+      ...article,
+      reading_time_minutes: this.computeReadingTime(article.body || '')
+    }));
 
-    return {articles, articlesCount};
+    return {articles: articlesWithReadingTime, articlesCount};
   }
 
   async findOne(where): Promise<ArticleRO> {
     const article = await this.articleRepository.findOne(where);
+    if (article) {
+      article.reading_time_minutes = this.computeReadingTime(article.body || '');
+    }
     return {article};
   }
 
@@ -108,6 +119,9 @@ export class ArticleService {
 
     await this.commentRepository.save(comment);
     article = await this.articleRepository.save(article);
+    if (article) {
+      article.reading_time_minutes = this.computeReadingTime(article.body || '');
+    }
     return {article}
   }
 
@@ -121,8 +135,14 @@ export class ArticleService {
       const deleteComments = article.comments.splice(deleteIndex, 1);
       await this.commentRepository.delete(deleteComments[0].id);
       article =  await this.articleRepository.save(article);
+      if (article) {
+        article.reading_time_minutes = this.computeReadingTime(article.body || '');
+      }
       return {article};
     } else {
+      if (article) {
+        article.reading_time_minutes = this.computeReadingTime(article.body || '');
+      }
       return {article};
     }
 
@@ -141,6 +161,9 @@ export class ArticleService {
       article = await this.articleRepository.save(article);
     }
 
+    if (article) {
+      article.reading_time_minutes = this.computeReadingTime(article.body || '');
+    }
     return {article};
   }
 
@@ -159,6 +182,9 @@ export class ArticleService {
       article = await this.articleRepository.save(article);
     }
 
+    if (article) {
+      article.reading_time_minutes = this.computeReadingTime(article.body || '');
+    }
     return {article};
   }
 
@@ -177,6 +203,7 @@ export class ArticleService {
     article.comments = [];
 
     const newArticle = await this.articleRepository.save(article);
+    newArticle.reading_time_minutes = this.computeReadingTime(newArticle.body || '');
 
     const author = await this.userRepository.findOne({ where: { id: userId }, relations: ['articles'] });
     author.articles.push(article);
@@ -191,6 +218,9 @@ export class ArticleService {
     let toUpdate = await this.articleRepository.findOne({ slug: slug});
     let updated = Object.assign(toUpdate, articleData);
     const article = await this.articleRepository.save(updated);
+    if (article) {
+      article.reading_time_minutes = this.computeReadingTime(article.body || '');
+    }
     return {article};
   }
 
@@ -200,5 +230,14 @@ export class ArticleService {
 
   slugify(title: string) {
     return slug(title, {lower: true}) + '-' + (Math.random() * Math.pow(36, 6) | 0).toString(36)
+  }
+
+  private computeReadingTime(body: string): number {
+    if (!body) {
+      return 1;
+    }
+    const wordCount = body.trim().split(/\s+/).length;
+    const minutes = Math.ceil(wordCount / 200);
+    return Math.max(1, minutes);
   }
 }
