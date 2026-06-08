@@ -6,6 +6,15 @@ import { UserEntity } from './user.entity';
 import { UserService } from './user.service';
 import { AuthMiddleware } from './auth.middleware';
 
+@Controller('ping')
+export class PingController {
+  @Get()
+  @Header('Content-Type', 'text/plain')
+  getPing(): string {
+    return 'pong';
+  }
+}
+
 @Injectable()
 export class LoggingMiddleware implements NestMiddleware {
   private readonly logger = new Logger('HTTP');
@@ -22,15 +31,6 @@ export class LoggingMiddleware implements NestMiddleware {
 
     next();
   }
-
-@Controller('ping')
-export class PingController {
-  @Get()
-  @Header('Content-Type', 'text/plain')
-  getPing(): string {
-    return 'pong';
-  }
-}
 }
 
 @Module({

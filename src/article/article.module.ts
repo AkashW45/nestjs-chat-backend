@@ -1,4 +1,4 @@
-import { Controller, Get, Header, Injectable, Logger, MiddlewareConsumer, Module, NestMiddleware, NestModule, RequestMethod } from '@nestjs/common';
+import { Controller, Get, Injectable, Logger, MiddlewareConsumer, Module, NestMiddleware, NestModule, RequestMethod } from '@nestjs/common';
 import { ArticleController } from './article.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ArticleEntity } from './article.entity';
@@ -8,15 +8,6 @@ import { FollowsEntity } from '../profile/follows.entity';
 import { ArticleService } from './article.service';
 import { AuthMiddleware } from '../user/auth.middleware';
 import { UserModule } from '../user/user.module';
-
-@Controller()
-export class PingController {
-  @Get('ping')
-  @Header('Content-Type', 'text/plain')
-  getPing(): string {
-    return 'pong';
-  }
-}
 
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {
@@ -35,6 +26,14 @@ export class LoggerMiddleware implements NestMiddleware {
     });
 
     next();
+  }
+}
+
+@Controller()
+export class PingController {
+  @Get('ping')
+  ping(): string {
+    return 'pong';
   }
 }
 

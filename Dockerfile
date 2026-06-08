@@ -1,22 +1,14 @@
 # syntax=docker/dockerfile:1
-FROM node:20-alpine
+# Static site (plain HTML/CSS/JS) served by nginx. A container must listen on a
+# port for ECS/App Runner to route traffic to it — a bare .html file can't be
+# "deployed" on its own, so we wrap it in a tiny nginx web server.
+FROM nginx:1.27-alpine
 
-WORKDIR /app
-ENV NODE_ENV=production
+# Serve on nginx's native port 80; do NOT rewrite the config. The old sed-based
+# port rewrite silently failed on newer nginx images, leaving nginx on 80 while
+# the target group expected another port -> failed ELB health checks -> 502.
+COPY . /usr/share/nginx/html
 
-COPY package*.json ./
-RUN if [ -f package-lock.json ]; then npm ci --omit=dev; else npm install --omit=dev; fi
+EXPOSE 80
 
-COPY . .
-
-# Build only if a "build" script exists in package.json; ignore failures
-RUN if grep -q '"build"' package.json 2>/dev/null; then npm run build || true; fi
-
-EXPOSE 3000
-
-# Pick whichever entry point this repo actually has
-CMD ["sh", "-c", "\
-    if [ -f dist/main.js ]; then exec node dist/main.js; \
-    elif [ -f dist/index.js ]; then exec node dist/index.js; \
-    elif [ -f index.js ]; then exec node index.js; \
-    else exec npm start; fi"]
+CMD ["nginx", "-g", "daemon off;"]
