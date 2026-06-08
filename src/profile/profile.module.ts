@@ -8,15 +8,6 @@ import {FollowsEntity} from "./follows.entity";
 import {AuthMiddleware} from "../user/auth.middleware";
 import { Request, Response, NextFunction } from 'express';
 
-@Controller()
-export class PingController {
-  @Get('/ping')
-  @Header('Content-Type', 'text/plain')
-  ping(): string {
-    return 'pong';
-  }
-}
-
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {
   private readonly logger = new Logger('HTTP');
@@ -32,6 +23,15 @@ export class LoggerMiddleware implements NestMiddleware {
     });
 
     next();
+  }
+}
+
+@Controller('ping')
+export class PingController {
+  @Get()
+  @Header('Content-Type', 'text/plain')
+  getPing(): string {
+    return 'pong';
   }
 }
 

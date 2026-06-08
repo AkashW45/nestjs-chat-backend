@@ -20,9 +20,9 @@
 #   AWS_SECRET_ACCESS_KEY
 #   AWS_REGION             (e.g. us-east-1)
 #   AWS_ACCOUNT_ID         (12-digit AWS account number)
-#   ECR_REPOSITORY         (e.g. user-profile-article-api)
+#   ECR_REPOSITORY         (e.g. article-service)
 #   ECS_CLUSTER            (e.g. leave-mgmt-cluster)
-#   ECS_SERVICE            (e.g. user-profile-article-api)
+#   ECS_SERVICE            (e.g. article-service)
 
 name: CI/CD
 
